@@ -2,13 +2,52 @@
 <html>
 <head>
   <title>Page1</title>
+  <script>
+    function headFunction(path) {
+      fetch(path, { method: 'HEAD' })
+        .then(response => {
+          if (response.ok) {
+            var cacheControl = response.headers.get('cache-control');
+            if (cacheControl && cacheControl.includes('max-age')) {
+              showResult('Resource exists but is not fresh');
+            } else {
+              showResult('Resource exists and is fresh');
+            }
+          } else if (response.status === 404) {
+            showResult('Resource does not exist');
+          } else {
+            showResult('Error: ' + response.status);
+          }
+        })
+        .catch(error => {
+          showResult('Error: ' + error);
+        });
+    }
+
+    function showResult(result) {
+      var resultDiv = document.getElementById('result');
+      resultDiv.textContent = result;
+    }
+  </script>
 </head>
 <body>
   <h1>Welcome to the Page1</h1>
   <link rel="icon" href="favicon.ico" type="image/x-icon">
-
+  <button onclick="headFunction('/page2.html')">freshness of page 1</button>
+  <div id="result"></div>
+  <table>
+    <tr>
+      <td>
+        <img src="tea1.jpg" alt="Tea 1">
+      </td>
+      <td>
+        <img src="tea2.jpg" alt="Tea 2">
+      </td>
+    </tr>
+  </table>
   <ul>
     <li><a href="index.html">Page 1</a></li>
   </ul>
+
 </body>
 </html>

@@ -3,6 +3,8 @@ import socket
 import os
 import datetime
 import mimetypes
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 
 def file_send(path, conn, request_headers):
@@ -15,8 +17,8 @@ def file_send(path, conn, request_headers):
         conn.sendall((response+file_data).encode())
         return
 
-    if path == '/':
-        path = '/index.html'
+    if path == 'html/':
+        path = 'html/index.html'
     # open file in binary, last modified timestmap check
     with open(path, 'rb') as f:
         file_data = f.read()
@@ -27,6 +29,7 @@ def file_send(path, conn, request_headers):
         if client_last_modified == last_modified:
             # 304 Not modified
             response = b"HTTP/1.1 304 Not Modified\r\n\r\n"
+            print(response)
             conn.sendall(response)
             return
 
@@ -40,7 +43,33 @@ def file_send(path, conn, request_headers):
     conn.sendall(header + file_data)
 
 
+def head_function(path, conn, request_headers):
+    path = 'html' + path
+    # 404 Not Found
+    if not os.path.exists(path):
+        response = "HTTP/1.1 404 File Not Found\r\n\r\n"
+        f = open('html/404.html')
+        file_data = f.read()
+        conn.sendall((response + file_data).encode())
+        return
+
+    if path == 'html/':
+        path = 'html/index.html'
+
+    last_modified = get_last_modified(path)
+    content_type = get_extension_type(path)
+
+    # 200 OK header
+    header = "HTTP/1.1 200 OK\r\n"
+    header += f"Content-Type: {content_type}\r\n"
+    header += f"Last-Modified: {last_modified}\r\n"
+    header += "\r\n"
+
+    conn.sendall(header.encode())
+    conn.close()
+
 def request_rcv(conn,request):
+    command = request.split()[0]
     path = request.split()[1]
     print(path)
     headers = {}
@@ -50,7 +79,10 @@ def request_rcv(conn,request):
             break
         head,value = line.split(': ', 1)
         headers[head] = value
-    file_send(path,conn,headers)
+    if command == 'HEAD': #HEAD
+        head_function(path,conn,headers)
+    else: #GET
+        file_send(path,conn,headers)
     conn.close()
 
 
@@ -66,21 +98,23 @@ def get_extension_type(path):
     return content_type or 'application/octet-stream'
 
 
-ip = '0.0.0.0'
+ip = '127.0.0.1'
 port = 8080
 
 skt = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 skt.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
 skt.bind((ip,port))
-skt.listen()
+skt.listen(5)
 print('Listening on port ', port)
 
+pool = ThreadPoolExecutor(max_workers=5)
 while True:
     conn,addr = skt.accept()
+
     request = conn.recv(1024).decode()
     if not request:
         continue
     print(request)
-    request_rcv(conn,request)
-    conn.close()
+
+    pool.submit(request_rcv, conn, request)
 skt.close()
