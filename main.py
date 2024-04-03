@@ -40,6 +40,7 @@ def file_send(path, conn, request_headers):
     header += f"Content-Length: {len(file_data)}\r\n".encode()
     header += f"Last-Modified: {last_modified}\r\n".encode()
     header += b"\r\n"
+    write_log(header+file_data)
     conn.sendall(header + file_data)
 
 
@@ -64,7 +65,7 @@ def head_function(path, conn, request_headers):
     header += f"Content-Type: {content_type}\r\n"
     header += f"Last-Modified: {last_modified}\r\n"
     header += "\r\n"
-
+    write_log(header)
     conn.sendall(header.encode())
     conn.close()
 
@@ -85,6 +86,9 @@ def request_rcv(conn,request):
         file_send(path,conn,headers)
     conn.close()
 
+def write_log(text):
+    with open('log/log.txt','a+') as file:
+        file.write(request + '\n')
 
 def get_last_modified(path):
     timestamp = os.path.getmtime(path)
@@ -115,6 +119,7 @@ while True:
     if not request:
         continue
     print(request)
+    write_log(request)
 
     pool.submit(request_rcv, conn, request)
 skt.close()
