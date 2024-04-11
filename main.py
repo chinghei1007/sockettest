@@ -1,12 +1,14 @@
 import socket
 import os
 import time
+import datetime
 import mimetypes
 from concurrent.futures import ThreadPoolExecutor
 
 
-def file_send(path, conn, request_headers):
+def get_function(path, conn, request_headers):
     print(path)
+    print(request_headers)
     path = 'html' + path
     # 404 Not Found
     if not os.path.exists(path):
@@ -26,16 +28,17 @@ def file_send(path, conn, request_headers):
         file_data = f.read()
 
     last_modified = get_last_modified(path)
-    if "If-Modified-Since" in request_headers:
-        client_last_modified = request_headers.get("If-Modified-Since")
+    if 'If-Modified-Since' in request_headers:
+        client_last_modified = str(request_headers.get("If-Modified-Since"))
+        print(path + str(client_last_modified) + "vs" + str(last_modified))
         if client_last_modified == last_modified:
             # 304 Not modified
-            response = "HTTP/1.1 304 Not Modified\r\n\r\n"
+            response = b"HTTP/1.1 304 Not Modified\r\n\r\n"
             # log
             write_log("304 Not Modified\n")
             print(response)
-            conn.sendall(response).encode()
-            return
+            conn.sendall(response)
+        return
 
     # 200 OK header
     content_type = get_extension_type(path)
@@ -46,6 +49,7 @@ def file_send(path, conn, request_headers):
     header += b"\r\n"
     write_log("200 OK\n")
     conn.sendall(header + file_data)
+    return
 
 
 def head_function(path, connection):
@@ -68,7 +72,7 @@ def head_function(path, connection):
     header += f"Content-Type: {content_type}\r\n"
     header += f"Last-Modified: {last_modified}\r\n"
     header += "\r\n"
-    write_log(header)
+    write_log("200 OK\n")
     connection.sendall(header.encode())
 
 
@@ -77,7 +81,6 @@ def send_bad_request(connection):
     f = open('html/400.html')
     file_data = f.read()
     connection.sendall((response + file_data).encode())
-    connection.close()
 
 
 def request_rcv(conn, request, address):
@@ -86,7 +89,7 @@ def request_rcv(conn, request, address):
     print(path)
     if path == "/":
         path = "/index.html"
-    log_text = str(address[0]) + ":" + str(address[1]) + "|" + str(time.ctime()) + "|" + request.split(" ")[0] + request.split(" ")[1] + "|"
+    log_text = "Client: "+ str(address[0]) + ":" + str(address[1]) + "|" + str(time.ctime()) + "|" + "Host: " + request.split(" ")[0] + request.split(" ")[1] + "|"
     write_log(log_text)
     headers = {}
     lines = request.splitlines()
@@ -103,27 +106,49 @@ def request_rcv(conn, request, address):
     if command == 'HEAD':  # HEAD
         head_function(path, conn)
     elif command == 'GET':  # GET
-        file_send(path, conn, headers)
+        get_function(path, conn, headers)
     else:
         send_bad_request(conn)
+    remove_short_lines()
     if not connection_alive:
+        future.cancel()
         conn.close()
 
 
 def write_log(text):
-    with open('log/log.txt', 'a+') as file:
-        file.write(text)
-        return
+    file = open('log/log.txt', 'a+')
+    file.write(text)
+    file.close()
+    write_log1(text)
+    return
+def write_log1(text):
+    file = open('log/log1.txt', 'a+')
+    file.write(text)
+    file.close()
+    return
 
 
 def get_last_modified(path):
     timestamp = os.path.getmtime(path)
-    return timestamp
+    return str(timestamp)
 
 
 def get_extension_type(path):
     content_type, _ = mimetypes.guess_type(path)
     return content_type or 'application/octet-stream'
+
+
+def remove_short_lines():
+    file_path = 'log/log.txt'
+    strip = []
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+    for line in lines:
+        if len(line) > 70:
+            strip.append(str(line))
+    with open(file_path, 'w') as file:
+        file.writelines(strip)
+    return
 
 
 ip = '127.0.0.1'
@@ -138,11 +163,10 @@ print('Listening on port ', port)
 pool = ThreadPoolExecutor(max_workers=5)
 while True:
     conn,addr = skt.accept()
-
     request = conn.recv(1024).decode('utf-8')
     if not request:
         continue
     print(request)
-    request_rcv(conn,request,addr)
-    # pool.submit(request_rcv, conn, request, addr)
+    # request_rcv(conn,request,addr)
+    future = pool.submit(request_rcv, conn, request, addr)
 skt.close()

@@ -1,5 +1,8 @@
 Client: 127.0.0.1:59003|Thu Apr 11 23:20:52 2024|Host: GET/page1.html|200 OK
 Client: 127.0.0.1:59004|Thu Apr 11 23:20:52 2024|Host: GET/abab.jpg|Client: 127.0.0.1:59005|Thu Apr 11 23:20:52 2024|Host: GET/favicon.png|304 Not Modified
+304 Not Modified
 Client: 127.0.0.1:59006|Thu Apr 11 23:20:59 2024|Host: HEAD/page1.html|Client: 127.0.0.1:59007|Thu Apr 11 23:20:59 2024|Host: GET/favicon.ico|200 OK
+304 Not Modified
 Client: 127.0.0.1:59008|Thu Apr 11 23:21:04 2024|Host: GET/index.html|200 OK
 Client: 127.0.0.1:59009|Thu Apr 11 23:21:08 2024|Host: GET/page2.html|Client: 127.0.0.1:59010|Thu Apr 11 23:21:08 2024|Host: GET/favicon.ico|404 Not Found
+304 Not Modified
