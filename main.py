@@ -6,7 +6,7 @@ import mimetypes
 from concurrent.futures import ThreadPoolExecutor
 
 
-def get_function(path, conn, request_headers):
+def GET_function(path, conn, request_headers):
     print(path)
     print(request_headers)
     path = 'html' + path
@@ -52,14 +52,14 @@ def get_function(path, conn, request_headers):
     return
 
 
-def head_function(path, connection):
+def head_function(path, conn):
     path = 'html' + path
     # 404 Not Found
     if not os.path.exists(path):
         response = "HTTP/1.1 404 File Not Found\r\n\r\n"
         f = open('html/404.html')
         file_data = f.read()
-        connection.sendall((response + file_data).encode())
+        conn.sendall((response + file_data).encode())
         return
 
     if path == 'html/':
@@ -76,11 +76,11 @@ def head_function(path, connection):
     connection.sendall(header.encode())
 
 
-def send_bad_request(connection):
+def send_bad_request(conn):
     response = "HTTP/1.0 400 Bad Request\r\n\r\n"
     f = open('html/400.html')
     file_data = f.read()
-    connection.sendall((response + file_data).encode())
+    conn.sendall((response + file_data).encode())
 
 
 def request_rcv(conn, request, address):
@@ -119,9 +119,9 @@ def write_log(text):
     file = open('log/log.txt', 'a+')
     file.write(text)
     file.close()
-    write_log1(text)
+    # write_log1(text) #testing purposes
     return
-def write_log1(text):
+def write_log1(text): #testing purposes
     file = open('log/log1.txt', 'a+')
     file.write(text)
     file.close()

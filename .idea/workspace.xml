@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7afef455-e627-4cb2-b2aa-1a84a915b1a9" name="Changes" comment="0441 2004">
+    <list default="true" id="7afef455-e627-4cb2-b2aa-1a84a915b1a9" name="Changes" comment="0411 2321">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -134,7 +134,23 @@
       <option name="project" value="LOCAL" />
       <updated>1711973086843</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="0411 2321">
+      <option name="closed" value="true" />
+      <created>1712848908757</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1712848908757</updated>
+    </task>
+    <task id="LOCAL-00007" summary="0411 2321">
+      <option name="closed" value="true" />
+      <created>1712848924701</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1712848924701</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -153,14 +169,15 @@
     <MESSAGE value="0401 2000" />
     <MESSAGE value="0329 1637" />
     <MESSAGE value="0441 2004" />
-    <option name="LAST_COMMIT_MESSAGE" value="0441 2004" />
+    <MESSAGE value="0411 2321" />
+    <option name="LAST_COMMIT_MESSAGE" value="0411 2321" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/main.py</url>
-          <line>161</line>
+          <line>164</line>
           <option name="timeStamp" value="10" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
