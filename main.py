@@ -1,27 +1,26 @@
-import email.utils
 import socket
 import os
-import datetime
 import time
-from time import gmtime,strftime
 import mimetypes
 from concurrent.futures import ThreadPoolExecutor
 
 
 def file_send(path, conn, request_headers):
+    print(path)
     path = 'html' + path
     # 404 Not Found
     if not os.path.exists(path):
         response = "HTTP/1.1 404 File Not Found \r\n\r\n"
         f = open('html/404.html')
         file_data = f.read()
-        conn.sendall((response + file_data).encode())
+        conn.send((response + file_data).encode())
         # log
         write_log("404 Not Found\n")
         return
 
     if path == 'html/':
         path = 'html/index.html'
+
     # open file in binary, last modified timestmap check
     with open(path, 'rb') as f:
         file_data = f.read()
@@ -47,10 +46,9 @@ def file_send(path, conn, request_headers):
     header += b"\r\n"
     write_log("200 OK\n")
     conn.sendall(header + file_data)
-    conn.close()
 
 
-def head_function(path, connection, request_headers):
+def head_function(path, connection):
     path = 'html' + path
     # 404 Not Found
     if not os.path.exists(path):
@@ -72,16 +70,22 @@ def head_function(path, connection, request_headers):
     header += "\r\n"
     write_log(header)
     connection.sendall(header.encode())
+
+
+def send_bad_request(connection):
+    response = "HTTP/1.0 400 Bad Request\r\n\r\n"
+    f = open('html/400.html')
+    file_data = f.read()
+    connection.sendall((response + file_data).encode())
     connection.close()
 
 
-def request_rcv(connection, request, address):
+def request_rcv(conn, request, address):
     command = request.split()[0]
     path = request.split()[1]
     print(path)
     if path == "/":
         path = "/index.html"
-    print(time.ctime())
     log_text = str(address[0]) + ":" + str(address[1]) + "|" + str(time.ctime()) + "|" + request.split(" ")[0] + request.split(" ")[1] + "|"
     write_log(log_text)
     headers = {}
@@ -91,11 +95,19 @@ def request_rcv(connection, request, address):
             break
         head, value = line.split(': ', 1)
         headers[head] = value
+    if 'Connection' in headers and headers['Connection'] == 'keep-alive':
+        connection_alive = True
+    else:
+        connection_alive = False
+
     if command == 'HEAD':  # HEAD
-        head_function(path, connection, headers)
-    else:  # GET
+        head_function(path, conn)
+    elif command == 'GET':  # GET
         file_send(path, conn, headers)
-    conn.close()
+    else:
+        send_bad_request(conn)
+    if not connection_alive:
+        conn.close()
 
 
 def write_log(text):
@@ -106,7 +118,6 @@ def write_log(text):
 
 def get_last_modified(path):
     timestamp = os.path.getmtime(path)
-    print(timestamp)
     return timestamp
 
 
@@ -132,5 +143,6 @@ while True:
     if not request:
         continue
     print(request)
-    pool.submit(request_rcv, conn, request, addr)
+    request_rcv(conn,request,addr)
+    # pool.submit(request_rcv, conn, request, addr)
 skt.close()
