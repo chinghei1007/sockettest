@@ -47,6 +47,7 @@ def GET_function(path, conn, request_headers):
     header += f"Content-Length: {len(file_data)}\r\n".encode()
     header += f"Last-Modified: {last_modified}\r\n".encode()
     header += b"\r\n"
+    # log
     write_log("200 OK\n")
     conn.sendall(header + file_data)
     return
@@ -60,6 +61,8 @@ def head_function(path, conn):
         f = open('html/404.html')
         file_data = f.read()
         conn.sendall((response + file_data).encode())
+        # log
+        write_log("404 Not Found\n")
         return
 
     if path == 'html/':
@@ -72,8 +75,9 @@ def head_function(path, conn):
     header += f"Content-Type: {content_type}\r\n"
     header += f"Last-Modified: {last_modified}\r\n"
     header += "\r\n"
+    # log
     write_log("200 OK\n")
-    connection.sendall(header.encode())
+    conn.sendall(header.encode())
 
 
 def send_bad_request(conn):
@@ -90,7 +94,10 @@ def request_rcv(conn, request, address):
     if path == "/":
         path = "/index.html"
     log_text = "Client: "+ str(address[0]) + ":" + str(address[1]) + "|" + str(time.ctime()) + "|" + "Host: " + request.split(" ")[0] + request.split(" ")[1] + "|"
+    # ClientIP:port CurrentTime HostIP:port METHOD path
+    # line 23 38 51 65 79 will finish the remaining log text and opens a new line
     write_log(log_text)
+
     headers = {}
     lines = request.splitlines()
     for line in lines[1:]:
@@ -98,6 +105,7 @@ def request_rcv(conn, request, address):
             break
         head, value = line.split(': ', 1)
         headers[head] = value
+
     if 'Connection' in headers and headers['Connection'] == 'keep-alive':
         connection_alive = True
     else:
@@ -106,10 +114,11 @@ def request_rcv(conn, request, address):
     if command == 'HEAD':  # HEAD
         head_function(path, conn)
     elif command == 'GET':  # GET
-        get_function(path, conn, headers)
+        GET_function(path, conn, headers)
     else:
         send_bad_request(conn)
     remove_short_lines()
+
     if not connection_alive:
         future.cancel()
         conn.close()
@@ -121,6 +130,7 @@ def write_log(text):
     file.close()
     # write_log1(text) #testing purposes
     return
+
 def write_log1(text): #testing purposes
     file = open('log/log1.txt', 'a+')
     file.write(text)
